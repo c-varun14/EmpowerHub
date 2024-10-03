@@ -1,4 +1,6 @@
-import React, { useState } from "react";
+"use client";
+
+import { useState } from "react";
 import CareerGuidance from "@/components/counseling/CareerGuidance";
 import ResourceFinder from "@/components/counseling/ResourceFinder";
 

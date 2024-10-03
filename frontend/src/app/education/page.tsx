@@ -1,13 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useState, ChangeEvent } from "react";
 import AiCareerSuggestor from "@/components/education/AiCareerSuggestor";
 import EducationalRoadmapMaker from "@/components/education/EducationalRoadmapMaker";
 
 const Page = () => {
   const [selectedTool, setSelectedTool] = useState("career");
 
-  const handleSelectChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+  const handleSelectChange = (e: ChangeEvent<HTMLSelectElement>) => {
     setSelectedTool(e.target.value);
   };
 
@@ -16,7 +16,7 @@ const Page = () => {
       {/* Heading and description */}
       <header className="mb-8 text-center">
         <h1 className="text-4xl font-bold ">Education Section</h1>
-        <p className="mt-4 text-lg text-gray-400">
+        <p className="mt-4 text-lg max-w-xl mx-auto text-gray-400">
           The Education section offers two tools to help you navigate and plan
           your journey: the AI Career Suggestor and the Educational Roadmap
           Maker.

@@ -1,24 +1,44 @@
 "use client";
 
-import { useState } from "react";
 import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-// Polished Input Box
-const InputBox = ({ value, onChange }) => (
-  <textarea
-    value={value}
-    onChange={onChange}
-    placeholder="Enter the facility or technology you require resources for..."
-    className="w-full p-4 mb-6 text-white transition-all duration-300 bg-gray-800 border-2 border-gray-600 rounded-lg shadow-md h-22 focus:outline-none focus:border-blue-500"
-  />
-);
+import { useMutation } from "@tanstack/react-query";
+import axios, { AxiosError } from "axios";
+import Spinner from "@/app/loader";
+import {
+  searchQuerySchema,
+  searchQueryType,
+} from "@/types/CareerSuggestorSchema";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import { Button } from "@/components/ui/button";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+} from "@/components/ui/form";
+import { Textarea } from "@/components/ui/textarea";
+import { toast } from "@/hooks/use-toast";
+import { resourceFinderSchema } from "@/types/ResourceFinderSchema";
 
 // Card-like format for displaying group information
-const GroupCard = ({ groupName, description, link, members }) => (
+const GroupCard = ({
+  groupName,
+  description,
+  link,
+  members,
+}: {
+  groupName: string;
+  description: string;
+  link: string;
+  members: string;
+}) => (
   <div className="p-4 mb-4 bg-gray-900 border border-gray-700 rounded-lg shadow-md">
     <h3 className="text-xl font-semibold text-blue-400">
       <a href={link} target="_blank" rel="noopener noreferrer">
@@ -31,7 +51,17 @@ const GroupCard = ({ groupName, description, link, members }) => (
 );
 
 // Card-like format for displaying material information
-const MaterialCard = ({ name, link, details, type }) => (
+const MaterialCard = ({
+  name,
+  link,
+  details,
+  type,
+}: {
+  name: string;
+  details: string;
+  link: string;
+  type: string;
+}) => (
   <div className="p-4 mb-4 bg-gray-900 border border-gray-700 rounded-lg shadow-md">
     <h3 className="text-xl font-semibold text-blue-400">
       <a href={link} target="_blank" rel="noopener noreferrer">
@@ -44,86 +74,82 @@ const MaterialCard = ({ name, link, details, type }) => (
 );
 
 const ResourceFinder = () => {
-  const [exam, setExam] = useState("");
-  const [resources, setResources] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
-
-  const handleExamChange = (e) => setExam(e.target.value);
-
-  const handleExamSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setError(null);
-    try {
-      const response = await fetch("http://localhost:3000/api/resource", {
-        // Update this URL as needed
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ frontendinput: exam }),
+  const { isPending, data, mutate, error } = useMutation({
+    mutationFn: async (prompt: string) => {
+      const { data } = await axios.post("http://localhost:3000/api/resource", {
+        frontendinput: prompt,
       });
+      const parsedData = resourceFinderSchema.parse(data);
+      if (!parsedData)
+        throw new AxiosError("No resources found for the provided input.");
 
-      if (!response.ok) {
-        throw new Error("Network response was not ok");
-      }
+      return parsedData;
+    },
+    onError: (err) => {
+      console.log(err);
+      toast({
+        title: "Internal error",
+        description: "Something went wrong! Try again later",
+        variant: "destructive",
+      });
+    },
+  });
+  const form = useForm<searchQueryType>({
+    resolver: zodResolver(searchQuerySchema),
+    defaultValues: {
+      search: "",
+    },
+  });
+  console.log(error);
+  function onSubmit(values: searchQueryType) {
+    // Do something with the form values.
+    // ✅ This will be type-safe and validated.
+    console.log(values);
+    mutate(values.search);
+  }
 
-      const data = await response.json();
-      if (data.groups.length === 0 && data.materials.length === 0) {
-        setError("No resources found for the provided input.");
-      } else {
-        setResources(data);
-      }
-    } catch (error) {
-      setError("Failed to fetch resources.");
-      console.error(error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleReset = () => {
-    setExam("");
-    setResources(null);
-    setError(null);
-  };
-
+  // const handleExamSubmit = async (e) => {
+  //     if (!response.ok) {
+  //       throw new Error("Network response was not ok");
+  //     if (data.groups.length === 0 && data.materials.length === 0) {
+  //       setError("No resources found for the provided input.");
+  //     } else {
+  //       setResources(data);
+  //     }
+  // };
   return (
     <div className="p-6">
       <div className="">
         <h2 className="max-w-4xl mb-8 title">Resource Finder</h2>
-        <form
-          onSubmit={handleExamSubmit}
-          className="max-w-4xl mx-auto mb-6 text-left"
-        >
-          <div className="mb-4">
-            <label className="hidden block mb-2 text-gray-400" htmlFor="exam">
-              Enter Exam or Technology
-            </label>
-            <InputBox value={exam} onChange={handleExamChange} />
-          </div>
-          <button className="gradient-btn" type="submit">
-            Find Resources
-          </button>
-          {resources && (
-            <button
-              onClick={handleReset}
-              className="px-4 py-2 ml-4 font-bold text-white transition-transform duration-300 bg-gray-700 rounded-lg hover:scale-105"
-            >
-              Reset
-            </button>
-          )}
-        </form>
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+            <FormField
+              control={form.control}
+              name="search"
+              render={({ field }) => (
+                <FormItem className="text-left max-w-3xl mx-auto">
+                  <FormLabel>Enter your query</FormLabel>
+                  <FormControl>
+                    <Textarea placeholder="Eg: Web development" {...field} />
+                  </FormControl>
+                  {form.formState.errors.search && (
+                    <p className=" font-semibold text-sm text-red-500 ">
+                      {form.formState.errors.search.message}
+                    </p>
+                  )}
+                </FormItem>
+              )}
+            />
+            <Button type="submit">Submit</Button>
+          </form>
+        </Form>
 
-        {loading && <p className="mt-4 text-gray-400">Loading...</p>}
-        {error && <p className="mt-4 text-red-500">{error}</p>}
-
-        {resources && !loading && !error && (
+        {isPending && <Spinner />}
+        {data && !isPending && !error && (
           <div className="grid grid-cols-1 gap-6 p-4 mt-10 border-2 rounded-lg border-zinc-500">
             <div>
               <h3 className="mb-2 text-xl font-bold text-white">Groups</h3>
-              {resources.groups.map((group, index) => (
+              {data.groups.map((group, index) => (
                 <GroupCard
                   key={index}
                   groupName={group.name}
@@ -135,7 +161,7 @@ const ResourceFinder = () => {
             </div>
             <div>
               <h3 className="mb-2 text-xl font-bold text-white">Materials</h3>
-              {resources.materials.map((material, index) => (
+              {data.materials.map((material, index) => (
                 <MaterialCard
                   key={index}
                   name={material.name}
@@ -157,8 +183,8 @@ const ResourceFinder = () => {
           <AccordionTrigger>What is the Resource Finder?</AccordionTrigger>
           <AccordionContent>
             <p className="text-gray-200">
-              The{" "}
-              <span className="font-semibold text-white">Resource Finder</span>{" "}
+              The
+              <span className="font-semibold text-white">Resource Finder</span>
               is a valuable tool designed to assist you in locating educational
               resources, discussion groups, and study materials relevant to your
               exams or interests. By providing comprehensive information about
@@ -173,10 +199,10 @@ const ResourceFinder = () => {
           <AccordionContent>
             <p className="text-gray-400">
               Whether you’re preparing for an upcoming exam or exploring new
-              study materials, the{" "}
+              study materials, the
               <span className="font-semibold">Resource Finder</span> offers
               tailored information based on your specific needs. It helps you
-              discover <span className="font-semibold">discussion groups</span>,{" "}
+              discover <span className="font-semibold">discussion groups</span>,
               <span className="font-semibold">study materials</span>, and other
               resources that can enhance your learning experience.
             </p>

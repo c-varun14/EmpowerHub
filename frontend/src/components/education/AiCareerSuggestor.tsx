@@ -1,6 +1,5 @@
 "use client";
 
-import { ChangeEventHandler } from "react";
 import {
   Accordion,
   AccordionContent,
@@ -12,7 +11,6 @@ import axios from "axios";
 import Spinner from "@/app/loader";
 import {
   careerSuggestorSchema,
-  careerSuggestorType,
   searchQuerySchema,
   searchQueryType,
 } from "@/types/CareerSuggestorSchema";
@@ -22,55 +20,13 @@ import { Button } from "@/components/ui/button";
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
-  FormMessage,
 } from "@/components/ui/form";
-import { Textarea } from "@/components//ui/textarea";
-// Function to simulate word-by-word animation
-// const useWordAnimation = (text, delay) => {
-//   const [displayedText, setDisplayedText] = useState("");
-//   React.useEffect(() => {
-//     let index = 0;
-//     const interval = setInterval(() => {
-//       setDisplayedText(text.slice(0, index + 1));
-//       index += 1;
-//       if (index >= text.length) clearInterval(interval);
-//     }, delay);
-//     return () => clearInterval(interval);
-//   }, [text, delay]);
-//   return displayedText;
-// };
+import { Textarea } from "@/components/ui/textarea";
+import { toast } from "@/hooks/use-toast";
 
-// Polished Prompt Box
-const PromptBox = ({
-  value,
-  onChange,
-}: {
-  value: string;
-  onChange: ChangeEventHandler<HTMLTextAreaElement>;
-}) => (
-  <Textarea
-    value={value}
-    onChange={onChange}
-    placeholder="Enter your interests and current knowledge or constraints here..."
-    className="w-full p-4 mb-6 text-white transition-all duration-300 bg-gray-800 border-2 border-gray-600 rounded-lg shadow-md h-22 focus:outline-none focus:border-blue-500"
-  />
-);
-
-// Animated Suggestion
-// const AnimatedSuggestion = ({ text }: {text: string}) => {
-//   const animatedText = useWordAnimation(text, 50); // Adjust delay as needed
-//   return (
-//     <animated.div className="mb-2 text-lg font-medium text-white">
-//       {animatedText}
-//     </animated.div>
-//   );
-// };
-
-// Styled Suggestion Box
 const SuggestionBox = ({
   careerTitle,
   description,
@@ -87,16 +43,24 @@ const SuggestionBox = ({
   </div>
 );
 
-// Spinner
-
 // Main Component
 const CareerSuggestionerAI = () => {
   const { isPending, data, mutate } = useMutation({
-    mutationFn: (interests) => {
-      return axios.post(
+    mutationFn: async (interests: string) => {
+      const { data } = await axios.post(
         "http://localhost:3000/api/career-recommendations",
-        JSON.stringify({ frontendinput: interests })
+        { frontendinput: interests }
       );
+      const parsedData = careerSuggestorSchema.parse(data);
+      return parsedData;
+    },
+    onError: (err) => {
+      console.log(err);
+      toast({
+        title: "Internal error",
+        description: "Something went wrong! Try again later",
+        variant: "destructive",
+      });
     },
   });
   const form = useForm<searchQueryType>({
@@ -110,29 +74,28 @@ const CareerSuggestionerAI = () => {
     // Do something with the form values.
     // ✅ This will be type-safe and validated.
     console.log(values);
+    mutate(values.search);
   }
 
   return (
     <div className="p-6">
       <h1 className="max-w-4xl mb-8 title">AI Career Suggestion </h1>
-
-      {/* Rebuild the complete form */}
-
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
           <FormField
             control={form.control}
-            name="username"
+            name="search"
             render={({ field }) => (
-              <FormItem>
-                <FormLabel>Username</FormLabel>
+              <FormItem className="text-left max-w-3xl mx-auto">
+                <FormLabel>Enter your query</FormLabel>
                 <FormControl>
-                  <Textarea placeholder="shadcn" {...field} />
+                  <Textarea placeholder="Eg: Web development" {...field} />
                 </FormControl>
-                <FormDescription>
-                  This is your public display name.
-                </FormDescription>
-                <FormMessage />
+                {form.formState.errors.search && (
+                  <p className=" font-semibold text-sm text-red-500 ">
+                    {form.formState.errors.search.message}
+                  </p>
+                )}
               </FormItem>
             )}
           />
@@ -142,9 +105,9 @@ const CareerSuggestionerAI = () => {
 
       {isPending && <Spinner />}
 
-      {!isPending && data.length > 0 && (
+      {!isPending && data && data.careerRecommendations && (
         <div className="px-4 py-4 mt-10 border-2 rounded-lg border-zinc-500">
-          {suggestions.map((suggestion, index) => (
+          {data.careerRecommendations.map((suggestion, index) => (
             <SuggestionBox key={index} {...suggestion} />
           ))}
         </div>
@@ -155,16 +118,16 @@ const CareerSuggestionerAI = () => {
         <Accordion
           type="single"
           collapsible
-          className="w-full max-w-3xl mx-auto text-left"
+          className="w-full max-w-3xl mx-auto text-left "
         >
           <AccordionItem value="item-1">
             <AccordionTrigger>What is the Education Section?</AccordionTrigger>
             <AccordionContent>
               <p className="text-white">
-                The{" "}
+                The
                 <span className="font-semibold text-white">
                   Education Section
-                </span>{" "}
+                </span>
                 provides comprehensive guidance to help you navigate your
                 educational journey. Whether you&apos;re seeking to explore
                 career paths or refine your academic focus, our tools are
@@ -179,7 +142,7 @@ const CareerSuggestionerAI = () => {
             </AccordionTrigger>
             <AccordionContent>
               <p className="text-zinc-400">
-                The <span className="font-semibold">Career Suggestor</span>{" "}
+                The <span className="font-semibold">Career Suggestor</span>
                 helps you discover potential career paths tailored to your
                 interests and existing knowledge. Input your details to receive
                 personalized career suggestions that align with your

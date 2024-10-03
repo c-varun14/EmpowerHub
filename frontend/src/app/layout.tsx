@@ -4,6 +4,7 @@ import "./globals.css";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import ReactQueryProvider from "@/lib/ReactQueryProvider";
+import { Toaster } from "@/components/ui/toaster";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -36,6 +37,7 @@ export default function RootLayout({
           {children}
           <Footer />
         </ReactQueryProvider>
+        <Toaster />
       </body>
     </html>
   );

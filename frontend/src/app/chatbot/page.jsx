@@ -1,4 +1,6 @@
-import React, { useState, useEffect, useRef } from "react";
+"use client";
+
+import { useState, useEffect, useRef } from "react";
 import { useSpring, animated } from "@react-spring/web";
 
 const formatMessage = (message) => {

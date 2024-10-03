@@ -1,24 +1,42 @@
 "use client";
 
-import { useState } from "react";
 import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-// Polished Input Box
-const InputBox = ({ value, onChange }) => (
-  <textarea
-    value={value}
-    onChange={onChange}
-    placeholder="Enter your desired career here..."
-    className="w-full p-4 mb-6 text-white transition-all duration-300 bg-gray-800 border-2 border-gray-600 rounded-lg shadow-md h-22 focus:outline-none focus:border-blue-500"
-  />
-);
+
+import { useMutation } from "@tanstack/react-query";
+import axios from "axios";
+import {
+  searchQuerySchema,
+  searchQueryType,
+} from "@/types/CareerSuggestorSchema";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import { Button } from "@/components/ui/button";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+} from "@/components/ui/form";
+import { Textarea } from "@/components/ui/textarea";
+import { toast } from "@/hooks/use-toast";
+import { careerGuidanceSchema } from "@/types/CareerGuidanceSchema";
 
 // Card-like format for displaying data
-const InfoCard = ({ name, description, website }) => (
+const InfoCard = ({
+  name,
+  description,
+  website,
+}: {
+  name: string;
+  description: string;
+  website: string;
+}) => (
   <div className="p-4 mb-4 bg-gray-900 border border-gray-700 rounded-lg shadow-md">
     <h3 className="text-xl font-semibold text-blue-400">
       <a href={website} target="_blank" rel="noopener noreferrer">
@@ -38,81 +56,74 @@ const Spinner = () => (
 
 // Main Component
 const CareerGuidance = () => {
-  const [career, setCareer] = useState("");
-  const [details, setDetails] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-
-  const handleCareerChange = (e) => setCareer(e.target.value);
-
-  const handleCareerSubmit = async (e) => {
-    e.preventDefault();
-    if (!career.trim()) {
-      setError("Please enter a desired career.");
-      return;
-    }
-    setError("");
-    setLoading(true);
-    try {
-      const response = await fetch(
+  const { isPending, data, mutate } = useMutation({
+    mutationFn: async (interests: string) => {
+      const { data } = await axios.post(
         "http://localhost:3000/api/career-guidance",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ frontendinput: career }),
-        }
+        { frontendinput: interests }
       );
-      const data = await response.json();
-      setDetails(data);
-    } catch (error) {
-      setError("Failed to fetch data.");
-      console.error("Error fetching career guidance data:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
+      const parsedData = careerGuidanceSchema.parse(data);
+      return parsedData;
+    },
+    onError: (err) => {
+      console.log(err);
+      toast({
+        title: "Internal error",
+        description: "Something went wrong! Try again later",
+        variant: "destructive",
+      });
+    },
+  });
+  const form = useForm<searchQueryType>({
+    resolver: zodResolver(searchQuerySchema),
+    defaultValues: {
+      search: "",
+    },
+  });
 
-  const handleReset = () => {
-    setCareer("");
-    setDetails(null);
-  };
+  function onSubmit(values: searchQueryType) {
+    // Do something with the form values.
+    // ✅ This will be type-safe and validated.
+    console.log(values);
+    mutate(values.search);
+  }
 
   return (
     <div className="p-6">
       <h1 className="max-w-4xl mb-8 title">Career Guidance</h1>
 
-      <form
-        onSubmit={handleCareerSubmit}
-        className="max-w-4xl mx-auto mb-6 text-left"
-      >
-        <InputBox value={career} onChange={handleCareerChange} />
-        {error && <p className="mb-4 text-red-500">{error}</p>}
-        <div className="flex">
-          <button className="gradient-btn" type="submit">
-            Get Details
-          </button>
-          {details && (
-            <button
-              onClick={handleReset}
-              className="px-4 py-2 ml-4 font-bold text-white transition-transform duration-300 bg-gray-700 rounded-lg hover:scale-105"
-            >
-              Reset
-            </button>
-          )}
-        </div>
-      </form>
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+          <FormField
+            control={form.control}
+            name="search"
+            render={({ field }) => (
+              <FormItem className="text-left max-w-3xl mx-auto">
+                <FormLabel>Enter your query</FormLabel>
+                <FormControl>
+                  <Textarea placeholder="Eg: Web development" {...field} />
+                </FormControl>
+                {form.formState.errors.search && (
+                  <p className=" font-semibold text-sm text-red-500 ">
+                    {form.formState.errors.search.message}
+                  </p>
+                )}
+              </FormItem>
+            )}
+          />
+          <Button type="submit">Submit</Button>
+        </form>
+      </Form>
 
-      {loading && <Spinner />}
+      {isPending && <Spinner />}
 
-      {!loading && details && (
+      {!isPending && data && (
         <div className="grid grid-cols-1 gap-6 px-4 py-4 mt-10 border-2 rounded-lg border-zinc-500">
           <div>
             <h3 className="mb-2 text-xl font-bold text-white">
               Relevant Exams
             </h3>
-            {details.relevantExams.map((exam, index) => (
+            {data.relevantExams.map((exam, index) => (
               <InfoCard
                 key={index}
                 name={exam.examTitle}
@@ -123,7 +134,7 @@ const CareerGuidance = () => {
           </div>
           <div>
             <h3 className="mb-2 text-xl font-bold text-white">Scholarships</h3>
-            {details.scholarships.map((scholarship, index) => (
+            {data.scholarships.map((scholarship, index) => (
               <InfoCard
                 key={index}
                 name={scholarship.scholarshipTitle}
@@ -134,7 +145,7 @@ const CareerGuidance = () => {
           </div>
           <div>
             <h3 className="mb-2 text-xl font-bold text-white">Prerequisites</h3>
-            {details.prerequisites.map((prerequisite, index) => (
+            {data.prerequisites.map((prerequisite, index) => (
               <InfoCard
                 key={index}
                 name={prerequisite.prerequisiteTitle}
@@ -145,7 +156,7 @@ const CareerGuidance = () => {
           </div>
           <div>
             <h3 className="mb-2 text-xl font-bold text-white">Programs</h3>
-            {details.programs.map((program, index) => (
+            {data.programs.map((program, index) => (
               <InfoCard
                 key={index}
                 name={program.programTitle}
