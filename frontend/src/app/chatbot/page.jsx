@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useSpring, animated } from "@react-spring/web";
+import { getCareerGuidanceResponse } from "./actions";
 
 const formatMessage = (message) => {
   console.log(message);
@@ -102,24 +103,10 @@ const CounselingChatbot = () => {
       const chatHistory = formatChatHistory();
 
       try {
-        const response = await fetch(
-          "http://localhost:3000/api/counseling-chatbot",
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ userInput, chatHistory }),
-          }
-        );
+      
 
-        if (!response.ok) {
-          throw new Error("Network response was not ok");
-        }
+          const {response : botResponse} = await getCareerGuidanceResponse(userInput,chatHistory)
 
-        const data = await response.json();
-        const { response: botResponse } = data;
-        // Add bot response to chat
         setMessages((prevMessages) => [
           ...prevMessages,
           { id: Date.now(), message: botResponse, sender: "ai" },
