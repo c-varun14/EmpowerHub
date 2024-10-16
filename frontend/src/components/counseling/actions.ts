@@ -3,8 +3,12 @@ import { responseschema } from "./responseSchemaResource";
 // adjust path as needed
 
 
+const apiKey = process.env.API_KEY;
 
-const genAI = new GoogleGenerativeAI("AIzaSyDdYlFzSUHTsdPg64sRxoCVkO8GZWO9HV8"); // Ensure you use NEXT_PUBLIC prefix for env variables on the frontend
+if (!apiKey) {
+  throw new Error("API_KEY is not defined in the environment variables.");
+}
+const genAI = new GoogleGenerativeAI(apiKey); // Ensure you use NEXT_PUBLIC prefix for env variables on the frontend
 
 const safetySettings = [
   {

@@ -3,7 +3,12 @@ import { GoogleGenerativeAI, HarmBlockThreshold, HarmCategory } from "@google/ge
 import { responseSchemaCounselling } from "./responseSchemaCounselling";
 
 // Set up Google Generative AI instance
-const genAI = new GoogleGenerativeAI("AIzaSyDdYlFzSUHTsdPg64sRxoCVkO8GZWO9HV8");
+const apiKey = process.env.API_KEY;
+
+if (!apiKey) {
+  throw new Error("API_KEY is not defined in the environment variables.");
+}
+const genAI = new GoogleGenerativeAI(apiKey);
 
 const safetySettings = [
   { category: HarmCategory.HARM_CATEGORY_HARASSMENT, threshold: HarmBlockThreshold.BLOCK_NONE },

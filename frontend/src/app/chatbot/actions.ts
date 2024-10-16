@@ -3,7 +3,13 @@
 import { GoogleGenerativeAI, HarmBlockThreshold, HarmCategory } from "@google/generative-ai";
 
 
-const genAI = new GoogleGenerativeAI("AIzaSyDdYlFzSUHTsdPg64sRxoCVkO8GZWO9HV8");
+const apiKey = process.env.API_KEY;
+
+if (!apiKey) {
+  throw new Error("API_KEY is not defined in the environment variables.");
+}
+
+const genAI = new GoogleGenerativeAI(apiKey);
 
 
 interface SchemaType {

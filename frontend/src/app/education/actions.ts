@@ -24,7 +24,12 @@ interface TreeNode {
 }
 
 // Set up the API key in a more secure way (environment variables)
-const genAI = new GoogleGenerativeAI("AIzaSyBH9mkkZpeYu_GbHmDXtaJG2yJpK3bABTU" );
+const apiKey = process.env.API_KEY;
+
+if (!apiKey) {
+  throw new Error("API_KEY is not defined in the environment variables.");
+}
+const genAI = new GoogleGenerativeAI(apiKey );
 
 // Safety settings for the AI model
 const safetySettings = [

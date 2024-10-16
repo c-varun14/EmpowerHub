@@ -2,9 +2,12 @@ import { GoogleGenerativeAI, HarmBlockThreshold, HarmCategory } from "@google/ge
 // adjust path as needed
 import {responseSchemaCareerRecommendations} from './responseSchemaSuggestor'
 
+const apiKey = process.env.API_KEY;
 
-const genAI = new GoogleGenerativeAI("AIzaSyDdYlFzSUHTsdPg64sRxoCVkO8GZWO9HV8"); // Ensure you use NEXT_PUBLIC prefix for env variables on the frontend
-
+if (!apiKey) {
+  throw new Error("API_KEY is not defined in the environment variables.");
+}
+const genAI = new GoogleGenerativeAI(apiKey);
 const safetySettings = [
   {
     category: HarmCategory.HARM_CATEGORY_HARASSMENT,
