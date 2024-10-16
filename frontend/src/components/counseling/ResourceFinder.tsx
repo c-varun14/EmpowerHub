@@ -26,6 +26,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
 import { resourceFinderSchema } from "@/types/ResourceFinderSchema";
+import { getResources } from "./actions";
 
 // Card-like format for displaying group information
 const GroupCard = ({
@@ -76,10 +77,8 @@ const MaterialCard = ({
 const ResourceFinder = () => {
   const { isPending, data, mutate, error } = useMutation({
     mutationFn: async (prompt: string) => {
-      const { data } = await axios.post("http://localhost:3000/api/resource", {
-        frontendinput: prompt,
-      });
-      const parsedData = resourceFinderSchema.parse(data);
+     const result = await getResources(prompt)
+      const parsedData = resourceFinderSchema.parse(result);
       if (!parsedData)
         throw new AxiosError("No resources found for the provided input.");
 

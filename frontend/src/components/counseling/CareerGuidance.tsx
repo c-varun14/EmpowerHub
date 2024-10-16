@@ -26,6 +26,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
 import { careerGuidanceSchema } from "@/types/CareerGuidanceSchema";
+import { getCareerGuide } from "@/app/counseling/actions";
 
 // Card-like format for displaying data
 const InfoCard = ({
@@ -58,11 +59,8 @@ const Spinner = () => (
 const CareerGuidance = () => {
   const { isPending, data, mutate } = useMutation({
     mutationFn: async (interests: string) => {
-      const { data } = await axios.post(
-        "http://localhost:3000/api/career-guidance",
-        { frontendinput: interests }
-      );
-      const parsedData = careerGuidanceSchema.parse(data);
+      const result = await getCareerGuide(interests)
+      const parsedData = careerGuidanceSchema.parse(result);
       return parsedData;
     },
     onError: (err) => {
