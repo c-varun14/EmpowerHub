@@ -1,3 +1,5 @@
+"use server"
+
 // app/actions.ts (server-side actions)
 import { GoogleGenerativeAI, HarmBlockThreshold, HarmCategory } from "@google/generative-ai";
 import { responseSchemaSteps } from "./responseSchemaSteps"; // Ensure you have the proper schema

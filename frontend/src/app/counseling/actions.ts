@@ -1,3 +1,5 @@
+"use server"
+
 import { careerGuidanceSchema } from "@/types/CareerGuidanceSchema";
 import { GoogleGenerativeAI, HarmBlockThreshold, HarmCategory } from "@google/generative-ai";
 import { responseSchemaCounselling } from "./responseSchemaCounselling";

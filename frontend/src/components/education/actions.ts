@@ -1,3 +1,5 @@
+"use server"
+
 import { GoogleGenerativeAI, HarmBlockThreshold, HarmCategory } from "@google/generative-ai";
 // adjust path as needed
 import {responseSchemaCareerRecommendations} from './responseSchemaSuggestor'

@@ -1,3 +1,5 @@
+"use server"
+
 import { GoogleGenerativeAI, HarmBlockThreshold, HarmCategory } from "@google/generative-ai";
 import { responseschema } from "./responseSchemaResource";
 // adjust path as needed
