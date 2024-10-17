@@ -26,6 +26,7 @@ import {
 } from "@/components/ui/form";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
+import { getCareerRecommendations } from "./actions";
 
 const SuggestionBox = ({
   careerTitle,
@@ -47,11 +48,9 @@ const SuggestionBox = ({
 const CareerSuggestionerAI = () => {
   const { isPending, data, mutate } = useMutation({
     mutationFn: async (interests: string) => {
-      const { data } = await axios.post(
-        "http://localhost:3000/api/career-recommendations",
-        { frontendinput: interests }
-      );
-      const parsedData = careerSuggestorSchema.parse(data);
+      const result = await getCareerRecommendations(interests);
+      // Assuming the result contains the correct data format, parse and validate it
+      const parsedData = careerSuggestorSchema.parse(result);
       return parsedData;
     },
     onError: (err) => {
